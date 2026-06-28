@@ -3,6 +3,7 @@ const https = require('https');
 const { getImageForRecipe } = require('./image_catalog');
 
 const BASE = 'https://www.nefisyemektarifleri.com';
+let _sharedBrowser = null;
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 const CATEGORY_SLUGS = {
@@ -145,16 +146,18 @@ async function getRecipeDetail(recipeUrl) {
   const spanMeta = parseMetaSpan(html);
   const ingredientNames = (meta.ingredients || []).map(i => i.ingredient_name);
 
-  // 2) Puppeteer ile tam içerik (malzeme miktarları + adımlar)
-  let browser;
+  // 2) Puppeteer ile tam içerik — browser'ı yeniden kullan
+  let page;
   try {
-    browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-    const page = await browser.newPage();
+    if (!_sharedBrowser || !_sharedBrowser.connected) {
+      _sharedBrowser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'] });
+    }
+    page = await _sharedBrowser.newPage();
     await page.setUserAgent(UA);
-    await page.goto(recipeUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    await page.goto(recipeUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
 
-    // İçerik yüklenene kadar kısa bekle
-    await new Promise(r => setTimeout(r, 3000));
+    // 3 sn yerine 1.5 sn bekle
+    await new Promise(r => setTimeout(r, 1500));
 
     const extracted = await page.evaluate(() => {
       // ── Malzemeler ──────────────────────────────────────────────────
@@ -234,8 +237,8 @@ async function getRecipeDetail(recipeUrl) {
       return { ingredients, steps, heroImg, difficulty };
     });
 
-    await browser.close();
-    browser = null;
+    await page.close();
+    page = null;
 
     return {
       id: meta.id || null,
@@ -254,7 +257,7 @@ async function getRecipeDetail(recipeUrl) {
     };
 
   } catch (err) {
-    if (browser) { try { await browser.close(); } catch {} }
+    if (page) { try { await page.close(); } catch {} }
     return {
       id: meta.id || null,
       name,
