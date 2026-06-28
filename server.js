@@ -326,12 +326,55 @@ app.get('/api/nefis/category', async (req, res) => {
   }
 });
 
+// Tarif detayı önbelleği (bellek içi, process yeniden başlayınca sıfırlanır)
+const detailCache = new Map();
+
+// Tarif dilini yeniden yaz (Claude AI)
+async function rewriteRecipeSteps(steps, name) {
+  if (!steps || steps.length === 0) return steps;
+  try {
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic.Anthropic();
+    const prompt = `Aşağıdaki "${name}" tarifinin adımlarını, sanki deneyimli bir ev aşçısı arkadaşın sana anlatıyormuş gibi sıcak, doğal ve akıcı bir Türkçeyle yeniden yaz.
+Orijinal cümle yapısını tamamen değiştir, "ben yapıyorum" veya özgün site ifadelerini kullanma.
+Her adımı kısa ve net tut. Sadece adımları JSON dizisi olarak döndür, başka bir şey yazma.
+
+Adımlar:
+${steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+
+Yanıt formatı: ["adım 1", "adım 2", ...]`;
+
+    const msg = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    const text = msg.content[0].text.trim();
+    const match = text.match(/\[[\s\S]+\]/);
+    if (match) return JSON.parse(match[0]);
+    return steps;
+  } catch (e) {
+    return steps;
+  }
+}
+
 // Tarif detayı: GET /api/nefis/detail?url=https://...
 app.get('/api/nefis/detail', async (req, res) => {
   const { url } = req.query;
   if (!url) return res.status(400).json({ error: 'url parametresi gerekli' });
+
+  // Cache'de varsa hemen dön
+  if (detailCache.has(url)) {
+    return res.json(detailCache.get(url));
+  }
+
   try {
     const recipe = await getRecipeDetail(url);
+    // Adımları AI ile yeniden yaz
+    if (recipe.steps && recipe.steps.length > 0) {
+      recipe.steps = await rewriteRecipeSteps(recipe.steps, recipe.name);
+    }
+    detailCache.set(url, recipe);
     res.json(recipe);
   } catch (err) {
     res.status(500).json({ error: err.message });
