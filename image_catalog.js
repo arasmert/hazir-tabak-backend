@@ -1,49 +1,56 @@
-// Higgsfield tarafından üretilmiş yemek fotoğrafları kataloğu
-// Model: recraft-v4-1 | Stil: Professional food photography, wooden table, warm moody lighting
+// Illustrasyon stili yemek görselleri — Higgsfield CDN (kalıcı)
+// Stil: Top-down flat lay, mavi-beyaz çiçekli tabak, tahta masa, gouache illustration
+
+const CDN = 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p';
 
 const IMAGE_CATALOG = {
   // ── Çorba ────────────────────────────────────────────────────────────────
-  corba: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171113_9c77ed3b-b55f-4fdb-b99b-1e58c901d0d8.png',
-  mercimek: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171113_9c77ed3b-b55f-4fdb-b99b-1e58c901d0d8.png',
+  mercimek: `${CDN}/hf_20260628_092929_6ab0793a-d05f-41fd-aa48-4cb5ac6a7445.png`,
+  corba:    `${CDN}/hf_20260628_092929_6ab0793a-d05f-41fd-aa48-4cb5ac6a7445.png`,
 
   // ── Tavuk ─────────────────────────────────────────────────────────────────
-  tavuk: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171526_d44d3191-f791-46f6-8c9f-61e4d565035f.png',
-  piliç: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171526_d44d3191-f791-46f6-8c9f-61e4d565035f.png',
-  sote: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171526_d44d3191-f791-46f6-8c9f-61e4d565035f.png',
+  tavuk:    `${CDN}/hf_20260628_092935_b98d9da1-481e-47e1-8163-322ecb8ee62f.png`,
+  pilic:    `${CDN}/hf_20260628_092935_b98d9da1-481e-47e1-8163-322ecb8ee62f.png`,
+  sote:     `${CDN}/hf_20260628_092935_b98d9da1-481e-47e1-8163-322ecb8ee62f.png`,
 
   // ── Et / Köfte ────────────────────────────────────────────────────────────
-  kofte: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171143_94725100-9c8d-4cb0-bc15-0acfca92270e.png',
-  et: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171143_94725100-9c8d-4cb0-bc15-0acfca92270e.png',
+  kofte:    `${CDN}/hf_20260628_091825_9c52193b-43b4-4e1f-8973-65c54973fa43.png`,
+  et:       `${CDN}/hf_20260628_091825_9c52193b-43b4-4e1f-8973-65c54973fa43.png`,
+  kebap:    `${CDN}/hf_20260628_091825_9c52193b-43b4-4e1f-8973-65c54973fa43.png`,
 
   // ── Pilav ─────────────────────────────────────────────────────────────────
-  pilav: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171148_a973d7a4-0de3-41e0-8a33-a71918e2e1c6.png',
-  rice: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171148_a973d7a4-0de3-41e0-8a33-a71918e2e1c6.png',
+  pilav:    `${CDN}/hf_20260628_091835_75530a66-a1f6-4859-9364-2b9457b55d37.png`,
+  bulgur:   `${CDN}/hf_20260628_091835_75530a66-a1f6-4859-9364-2b9457b55d37.png`,
 
   // ── Makarna ───────────────────────────────────────────────────────────────
-  makarna: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171154_5c82ca43-7a9c-45f1-b6ba-c5cbb442f9ea.png',
-  spagetti: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171154_5c82ca43-7a9c-45f1-b6ba-c5cbb442f9ea.png',
+  makarna:  `${CDN}/hf_20260628_092941_754991bd-8c51-4df8-96b9-cb3f7e32c3f7.png`,
+  spagetti: `${CDN}/hf_20260628_092941_754991bd-8c51-4df8-96b9-cb3f7e32c3f7.png`,
 
   // ── Salata ────────────────────────────────────────────────────────────────
-  salata: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171158_fdfe9817-dc2b-4598-af09-97749f43a3fb.png',
+  salata:   `${CDN}/hf_20260628_092945_7db16fa4-553b-48db-b8ef-661bf0d12183.png`,
 
-  // ── Kahvaltı ──────────────────────────────────────────────────────────────
-  kahvalti: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171202_0f6b2314-ef49-4f06-ac31-5431318ae906.png',
-  omlet: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171202_0f6b2314-ef49-4f06-ac31-5431318ae906.png',
-  yumurta: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171202_0f6b2314-ef49-4f06-ac31-5431318ae906.png',
+  // ── Kahvaltı / Yumurta ────────────────────────────────────────────────────
+  menemen:  `${CDN}/hf_20260628_091830_0c7f54d4-b752-4dc6-a38d-9d35b00787ea.png`,
+  omlet:    `${CDN}/hf_20260628_091830_0c7f54d4-b752-4dc6-a38d-9d35b00787ea.png`,
+  yumurta:  `${CDN}/hf_20260628_091830_0c7f54d4-b752-4dc6-a38d-9d35b00787ea.png`,
+  kahvalti: `${CDN}/hf_20260628_091830_0c7f54d4-b752-4dc6-a38d-9d35b00787ea.png`,
 
   // ── Tatlı / Baklava ───────────────────────────────────────────────────────
-  tatli: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171207_f7612b86-5556-4ede-9973-616f5601a92d.png',
-  baklava: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171207_f7612b86-5556-4ede-9973-616f5601a92d.png',
-  kek: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171207_f7612b86-5556-4ede-9973-616f5601a92d.png',
-  pasta: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171207_f7612b86-5556-4ede-9973-616f5601a92d.png',
+  baklava:  `${CDN}/hf_20260628_092950_4ab9cf0b-b41d-4490-814a-a9175abe93d0.png`,
+  tatli:    `${CDN}/hf_20260628_092950_4ab9cf0b-b41d-4490-814a-a9175abe93d0.png`,
+  kek:      `${CDN}/hf_20260628_092950_4ab9cf0b-b41d-4490-814a-a9175abe93d0.png`,
+  pasta:    `${CDN}/hf_20260628_092950_4ab9cf0b-b41d-4490-814a-a9175abe93d0.png`,
 
-  // ── Balık ─────────────────────────────────────────────────────────────────
-  balik: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171211_77f74074-8dc1-4690-9c1a-a03011cec5e5.png',
-  somon: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171211_77f74074-8dc1-4690-9c1a-a03011cec5e5.png',
-  deniz: 'https://d8j0ntlcm91z4.cloudfront.net/user_3AFhoF9vus7MvcqgrPqGwNrR61p/hf_20260627_171211_77f74074-8dc1-4690-9c1a-a03011cec5e5.png',
+  // ── Balık (henüz üretiliyor, geçici olarak salata) ────────────────────────
+  balik:    `${CDN}/hf_20260628_092945_7db16fa4-553b-48db-b8ef-661bf0d12183.png`,
+  somon:    `${CDN}/hf_20260628_092945_7db16fa4-553b-48db-b8ef-661bf0d12183.png`,
+  deniz:    `${CDN}/hf_20260628_092945_7db16fa4-553b-48db-b8ef-661bf0d12183.png`,
+
+  // ── Börek / Hamurişi (henüz üretiliyor, geçici olarak baklava) ───────────
+  borek:    `${CDN}/hf_20260628_092950_4ab9cf0b-b41d-4490-814a-a9175abe93d0.png`,
+  hamurisi: `${CDN}/hf_20260628_092950_4ab9cf0b-b41d-4490-814a-a9175abe93d0.png`,
 };
 
-// Kategori slug → fallback görseli
 const CATEGORY_FALLBACK = {
   corba:       'corba',
   salata:      'salata',
@@ -58,26 +65,27 @@ const CATEGORY_FALLBACK = {
   kahvalti:    'kahvalti',
   vegan:       'salata',
   zeytinyagli: 'salata',
-  hamurisi:    'pasta',
+  hamurisi:    'borek',
 };
 
-// Tarif adında kelime bazlı eşleşme
 const NAME_KEYWORDS = [
-  ['mercimek','corba'], ['çorba','corba'], ['corba','corba'], ['şehriye','corba'], ['tarhana','corba'],
-  ['tavuk','tavuk'], ['piliç','tavuk'], ['hindi','tavuk'],
-  ['köfte','kofte'], ['kebap','kofte'], ['kıyma','kofte'], ['biftek','et'], ['kuzu','et'],
-  ['pilav','pilav'], ['bulgur','pilav'],
-  ['makarna','makarna'], ['spagetti','makarna'], ['fettucine','makarna'], ['lazanya','makarna'],
-  ['salata','salata'], ['çoban','salata'],
-  ['baklava','baklava'], ['tatlı','tatli'], ['sufle','tatli'], ['pasta','pasta'], ['kek','kek'],
-  ['kurabiye','tatli'], ['muhallebi','tatli'], ['sütlaç','tatli'], ['helva','tatli'],
-  ['balık','balik'], ['somon','somon'], ['levrek','balik'], ['çipura','balik'], ['ton','balik'],
-  ['omlet','omlet'], ['yumurta','yumurta'], ['menemen','kahvalti'],
-  ['börek','kahvalti'], ['poğaça','kahvalti'],
-  ['sote','sote'],
+  ['mercimek', 'mercimek'], ['ezogelin', 'corba'], ['tarhana', 'corba'],
+  ['şehriye', 'corba'], ['domates', 'corba'], ['çorba', 'corba'], ['corba', 'corba'],
+  ['tavuk', 'tavuk'], ['piliç', 'pilic'], ['hindi', 'tavuk'],
+  ['köfte', 'kofte'], ['kebap', 'kebap'], ['kıyma', 'kofte'], ['biftek', 'et'], ['kuzu', 'et'],
+  ['pilav', 'pilav'], ['bulgur', 'bulgur'],
+  ['makarna', 'makarna'], ['spagetti', 'spagetti'], ['fettucine', 'makarna'], ['lazanya', 'makarna'],
+  ['menemen', 'menemen'], ['omlet', 'omlet'], ['yumurta', 'yumurta'],
+  ['börek', 'borek'], ['poğaça', 'borek'], ['gözleme', 'borek'],
+  ['salata', 'salata'], ['çoban', 'salata'],
+  ['baklava', 'baklava'], ['tatlı', 'tatli'], ['sufle', 'tatli'],
+  ['pasta', 'pasta'], ['kek', 'kek'], ['kurabiye', 'tatli'],
+  ['muhallebi', 'tatli'], ['sütlaç', 'tatli'], ['helva', 'tatli'],
+  ['balık', 'balik'], ['somon', 'somon'], ['levrek', 'balik'],
+  ['çipura', 'balik'], ['ton', 'balik'],
+  ['sote', 'sote'],
 ];
 
-// Tarif adından en iyi fotoğrafı bul
 function getImageForRecipe(recipeName, categorySlug) {
   if (!recipeName) return categorySlug ? (IMAGE_CATALOG[CATEGORY_FALLBACK[categorySlug]] || null) : null;
 
@@ -85,18 +93,15 @@ function getImageForRecipe(recipeName, categorySlug) {
     .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s')
     .replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c');
 
-  // Kelime bazlı eşleşme (öncelik sırasıyla)
   for (const [keyword, key] of NAME_KEYWORDS) {
     const kw = keyword.replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s')
       .replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c');
     if (name.includes(kw) && IMAGE_CATALOG[key]) return IMAGE_CATALOG[key];
   }
 
-  // Kategori fallback
   if (categorySlug) {
     const fallbackKey = CATEGORY_FALLBACK[categorySlug];
     if (fallbackKey && IMAGE_CATALOG[fallbackKey]) return IMAGE_CATALOG[fallbackKey];
-    // Slug'da bir keyword varsa ona göre de bak
     for (const [slug, key] of Object.entries(CATEGORY_FALLBACK)) {
       if (categorySlug.includes(slug) && IMAGE_CATALOG[key]) return IMAGE_CATALOG[key];
     }
