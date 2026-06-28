@@ -75,6 +75,37 @@ function parseMetaSpan(html) {
   };
 }
 
+// ── Tarif adına göre tahmini kalori ve maliyet ───────────────────────────
+const RECIPE_ESTIMATES = {
+  // [kalori, maliyet₺]
+  'mercimek':   [220, 25],  'çorba':    [180, 20],  'tarhana':   [200, 22],
+  'tavuk':      [320, 55],  'piliç':    [320, 55],  'hindi':     [280, 60],
+  'köfte':      [380, 65],  'kebap':    [420, 80],  'kıyma':     [350, 60],
+  'kuzu':       [400, 90],  'biftek':   [450, 110], 'et ':       [380, 75],
+  'pilav':      [250, 20],  'bulgur':   [220, 18],
+  'makarna':    [350, 30],  'lazanya':  [420, 45],
+  'salata':     [120, 25],  'çoban':    [130, 28],
+  'menemen':    [280, 30],  'omlet':    [250, 20],  'yumurta':   [180, 15],
+  'börek':      [340, 35],  'poğaça':   [320, 30],  'gözleme':   [300, 28],
+  'baklava':    [480, 40],  'tatlı':    [380, 35],  'kek':       [350, 30],
+  'pasta':      [400, 50],  'kurabiye': [320, 25],  'helva':     [360, 22],
+  'balık':      [280, 70],  'somon':    [320, 90],  'levrek':    [260, 85],
+  'sote':       [310, 55],  'güveç':    [290, 50],  'dolma':     [260, 45],
+  'mantı':      [380, 40],  'pide':     [420, 45],  'lahmacun':  [350, 40],
+};
+
+function estimateRecipe(name) {
+  const n = name.toLowerCase()
+    .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s')
+    .replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c');
+  for (const [key, [cal, cost]] of Object.entries(RECIPE_ESTIMATES)) {
+    const k = key.replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s')
+      .replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c');
+    if (n.includes(k)) return { calories: cal, cost };
+  }
+  return { calories: 300, cost: 40 }; // genel fallback
+}
+
 // ── HTML'den tarif listesi çıkar ──────────────────────────────────────────
 function parseRecipeList(html, limit = 12, categorySlug = null) {
   const results = [];
@@ -102,6 +133,7 @@ function parseRecipeList(html, limit = 12, categorySlug = null) {
     const imgMatch = context.match(/data-lazy-src="([^"]+?-\d+x\d+[^"]*\.(?:jpg|webp))"/);
 
     const title = rawTitle.trim();
+    const est = estimateRecipe(title);
     results.push({
       id: parseInt(id),
       name: title,
@@ -110,6 +142,8 @@ function parseRecipeList(html, limit = 12, categorySlug = null) {
       prepTime: prepM   ? `${prepM[1]} dk`  : null,
       cookTime: cookM   ? `${cookM[1]} dk`  : null,
       image:    getImageForRecipe(title, categorySlug) || (imgMatch ? imgMatch[1] : null),
+      calories: est.calories,
+      cost:     est.cost,
     });
 
     if (results.length >= limit) break;
