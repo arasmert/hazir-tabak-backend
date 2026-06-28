@@ -132,9 +132,49 @@ async function listByCategory(category, limit = 12) {
   return parseRecipeList(html, limit, category);
 }
 
-// ── Tarif detayı (Puppeteer) ──────────────────────────────────────────────
+// ── HTML'den malzeme ve adımları regex ile çek (Puppeteer'sız) ───────────
+function parseIngredientsFromHtml(html) {
+  const results = [];
+  // <li> içindeki malzeme metinlerini yakala
+  const liMatches = html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi);
+  for (const m of liMatches) {
+    const text = m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+    if (text.length > 2 && text.length < 150 &&
+        !text.match(/^(Giriş|TARİF|VİDEO|MENÜ|Reklam|©|Cookie|Paylaş|Yorum)/i)) {
+      results.push(text);
+    }
+  }
+  // Eğer <li> bulunamazsa, JSON içindeki ingredient_name'leri dene
+  return results.slice(0, 30);
+}
+
+function parseStepsFromHtml(html) {
+  const steps = [];
+  // Adım bloklarını yakala: numbered list veya p tags in preparation section
+  const olMatch = html.match(/<ol[^>]*>([\s\S]*?)<\/ol>/i);
+  if (olMatch) {
+    const liMatches = olMatch[1].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi);
+    for (const m of liMatches) {
+      const text = m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      if (text.length > 20 && !text.match(/©|Cookie|Reklam/i)) steps.push(text);
+    }
+  }
+  // Fallback: preparation div içindeki p'ler
+  if (steps.length === 0) {
+    const prepMatch = html.match(/class="[^"]*(?:preparation|hazirlanis|recipe-steps|tarif-yapilis)[^"]*"[^>]*>([\s\S]*?)<\/(?:div|section|ul)>/i);
+    if (prepMatch) {
+      const pMatches = prepMatch[1].matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi);
+      for (const m of pMatches) {
+        const text = m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+        if (text.length > 30 && !text.match(/©|Cookie|Reklam/i)) steps.push(text);
+      }
+    }
+  }
+  return steps.slice(0, 20);
+}
+
+// ── Tarif detayı (sadece HTTP fetch — hızlı) ─────────────────────────────
 async function getRecipeDetail(recipeUrl) {
-  // 1) Raw HTML ile hızlı meta çek
   const html = await fetchHtml(recipeUrl);
   const meta = parseDataLayer(html);
 
@@ -146,135 +186,28 @@ async function getRecipeDetail(recipeUrl) {
   const spanMeta = parseMetaSpan(html);
   const ingredientNames = (meta.ingredients || []).map(i => i.ingredient_name);
 
-  // 2) Puppeteer ile tam içerik — browser'ı yeniden kullan
-  let page;
-  try {
-    if (!_sharedBrowser || !_sharedBrowser.connected) {
-      _sharedBrowser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'] });
-    }
-    page = await _sharedBrowser.newPage();
-    await page.setUserAgent(UA);
-    await page.goto(recipeUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
+  // HTML'den direkt parse et (Puppeteer yok)
+  const ingredients = ingredientNames.length > 0
+    ? ingredientNames
+    : parseIngredientsFromHtml(html);
 
-    // 3 sn yerine 1.5 sn bekle
-    await new Promise(r => setTimeout(r, 1500));
+  const steps = parseStepsFromHtml(html);
 
-    const extracted = await page.evaluate(() => {
-      // ── Malzemeler ──────────────────────────────────────────────────
-      const ingredients = [];
-
-      // Siteye özel: .recipe-ingredients veya .ingredients-table veya ul içindeki li'ler
-      const selectors = [
-        '.recipe-ingredients li',
-        '.ingredients li',
-        '.ing-list li',
-        '[class*="ingredient"] li',
-        '.malzeme-listesi li',
-        '.recipe-content ul li',
-      ];
-      for (const sel of selectors) {
-        const els = document.querySelectorAll(sel);
-        if (els.length > 2) {
-          els.forEach(li => {
-            const t = li.innerText.trim();
-            if (t.length > 1 && t.length < 200 && !t.match(/^(TARİFLER|VİDEO|MENÜ|Giriş)/i)) {
-              ingredients.push(t);
-            }
-          });
-          break;
-        }
-      }
-
-      // Fallback: metin içeriğindeki li'ler
-      if (ingredients.length === 0) {
-        document.querySelectorAll('ul li').forEach(li => {
-          const cls = (li.closest('[class]')?.className || '') + (li.className || '');
-          if (cls.match(/ing|malzeme|ingredient|recipe/i)) {
-            const t = li.innerText.trim();
-            if (t.length > 2 && t.length < 200) ingredients.push(t);
-          }
-        });
-      }
-
-      // ── Adımlar ─────────────────────────────────────────────────────
-      const steps = [];
-      const stepSelectors = [
-        '.recipe-steps li',
-        '.preparation li',
-        '.recipe-preparation li',
-        '.steps li',
-        '.hazirlanis li',
-        '[class*="step"] p',
-        '.recipe-content .preparation p',
-        '.owner-note p',
-      ];
-      for (const sel of stepSelectors) {
-        const els = document.querySelectorAll(sel);
-        if (els.length > 0) {
-          els.forEach(el => {
-            const t = el.innerText.trim();
-            if (t.length > 15 && !t.match(/^(Reklam|Cookie|©|Giriş|TARİFLER)/i)) steps.push(t);
-          });
-          if (steps.length > 0) break;
-        }
-      }
-
-      // Fallback: article içindeki p'ler
-      if (steps.length === 0) {
-        document.querySelectorAll('article p, .recipe-text p').forEach(p => {
-          const t = p.innerText.trim();
-          if (t.length > 30 && !t.match(/©|Cookie|Reklam/i)) steps.push(t);
-        });
-      }
-
-      // ── Görsel (yüklü hali) ──────────────────────────────────────────
-      const heroImg = document.querySelector('.recipe-hero img, .recipe-image img, article img')?.src || null;
-
-      // ── Güçlük seviyesi ──────────────────────────────────────────────
-      const diffEl = document.querySelector('[class*="difficulty"], [class*="zorluk"], [class*="level"]');
-      const difficulty = diffEl?.innerText?.trim() || null;
-
-      return { ingredients, steps, heroImg, difficulty };
-    });
-
-    await page.close();
-    page = null;
-
-    return {
-      id: meta.id || null,
-      name,
-      url: recipeUrl,
-      image: getImageForRecipe(name) || extracted.heroImg || image,
-      prepTime:  meta.prepTime     || spanMeta.prepTime || null,
-      cookTime:  meta.cookDuration || spanMeta.cookTime || null,
-      serves:    (meta.serves?.trim()) || spanMeta.serves || null,
-      categories: meta.categories || [],
-      tags:       meta.tags        || [],
-      ingredientNames,
-      ingredients: extracted.ingredients,
-      steps:       extracted.steps,
-      difficulty:  extracted.difficulty,
-    };
-
-  } catch (err) {
-    if (page) { try { await page.close(); } catch {} }
-    return {
-      id: meta.id || null,
-      name,
-      url: recipeUrl,
-      image: getImageForRecipe(name) || image,
-      prepTime:  meta.prepTime     || spanMeta.prepTime || null,
-      cookTime:  meta.cookDuration || spanMeta.cookTime || null,
-      serves:    (meta.serves?.trim()) || spanMeta.serves || null,
-      categories: meta.categories || [],
-      tags:       meta.tags        || [],
-      ingredientNames,
-      ingredients: [],
-      steps: [],
-      difficulty: null,
-      puppeteerError: err.message,
-    };
-  }
+  return {
+    id: meta.id || null,
+    name,
+    url: recipeUrl,
+    image: getImageForRecipe(name) || image,
+    prepTime:   meta.prepTime     || spanMeta.prepTime || null,
+    cookTime:   meta.cookDuration || spanMeta.cookTime || null,
+    serves:     (meta.serves?.trim()) || spanMeta.serves || null,
+    categories: meta.categories || [],
+    tags:       meta.tags        || [],
+    ingredientNames,
+    ingredients,
+    steps,
+    difficulty: null,
+  };
 }
 
 module.exports = { searchRecipes, listByCategory, getRecipeDetail, CATEGORY_SLUGS };
