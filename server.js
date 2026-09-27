@@ -385,22 +385,39 @@ app.get('/api/nefis/detail', async (req, res) => {
 app.post('/api/nutrition/estimate', async (req, res) => {
   const text = String((req.body && req.body.text) || '').slice(0, 2000).trim();
   if (!text) return res.status(400).json({ error: 'text gerekli' });
-  if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'no_key' });
+  const gemini = process.env.GEMINI_API_KEY;
+  if (!gemini && !process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'no_key' });
   try {
-    const Anthropic = require('@anthropic-ai/sdk');
-    const client = new Anthropic.Anthropic();
     const prompt = `Sen bir diyetisyensin. Kullanıcı Türkiye'de yaşıyor ve yediği şeyi aşağıda tarif ediyor. Her yiyeceği ve içeceği ayrı kalem olarak çıkar. Miktar belirtilmemişse Türkiye'deki tipik porsiyonu, pişirme yağı belirtilmemişse ev veya esnaf lokantası yemeği için tipik yağ miktarını varsay. Değerler yenen (pişmiş) hâl içindir. Marka ürünlerde paket etiketindeki değerleri kullan.
 Yalnızca şu biçimde JSON döndür, başka metin yazma:
 {"items":[{"name":"Kuru fasulye","portion":"yarım porsiyon (125 g)","kcal":140,"p":7.5,"c":19,"f":3.5,"s":0}],"note":"Yaptığın varsayımlar, tek kısa cümle"}
 kcal tam sayı; p (protein), c (karbonhidrat), f (yağ), s (eklenmiş şeker: şeker, bal, şurup, meyve suyu; meyvenin ve sütün kendi şekeri sayılmaz) gram cinsinden, en fazla bir ondalık. Adları ve notu Türkçe yaz.
 
 Tarif: """${text}"""`;
-    const msg = await client.messages.create({
-      model: 'claude-sonnet-5',
-      max_tokens: 1500,
-      messages: [{ role: 'user', content: prompt }],
-    });
-    const out = msg.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    let out;
+    if (gemini) {
+      const model = process.env.GEMINI_MODEL || 'gemini-flash-latest';
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gemini },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
+        }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(`${r.status} ${(j.error && j.error.message) || ''}`);
+      out = ((j.candidates || [])[0]?.content?.parts || []).map(p => p.text || '').join('');
+    } else {
+      const Anthropic = require('@anthropic-ai/sdk');
+      const client = new Anthropic.Anthropic();
+      const msg = await client.messages.create({
+        model: 'claude-sonnet-5',
+        max_tokens: 1500,
+        messages: [{ role: 'user', content: prompt }],
+      });
+      out = msg.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    }
     const match = out.match(/\{[\s\S]*\}/);
     if (!match) return res.status(502).json({ error: 'invalid_json' });
     res.json(JSON.parse(match[0]));
