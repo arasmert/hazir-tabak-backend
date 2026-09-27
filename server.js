@@ -385,8 +385,10 @@ app.get('/api/nefis/detail', async (req, res) => {
 app.post('/api/nutrition/estimate', async (req, res) => {
   const text = String((req.body && req.body.text) || '').slice(0, 2000).trim();
   if (!text) return res.status(400).json({ error: 'text gerekli' });
-  const gemini = process.env.GEMINI_API_KEY;
-  if (!gemini && !process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'no_key' });
+  const anthropicVar = (process.env.ANTHROPIC_API_KEY || '').trim();
+  // A non-Anthropic key saved under ANTHROPIC_API_KEY is treated as the Gemini key.
+  const gemini = process.env.GEMINI_API_KEY || (anthropicVar && !anthropicVar.startsWith('sk-ant-') ? anthropicVar : null);
+  if (!gemini && !anthropicVar) return res.status(503).json({ error: 'no_key' });
   try {
     const prompt = `Sen bir diyetisyensin. Kullanıcı Türkiye'de yaşıyor ve yediği şeyi aşağıda tarif ediyor. Her yiyeceği ve içeceği ayrı kalem olarak çıkar. Miktar belirtilmemişse Türkiye'deki tipik porsiyonu, pişirme yağı belirtilmemişse ev veya esnaf lokantası yemeği için tipik yağ miktarını varsay. Değerler yenen (pişmiş) hâl içindir. Marka ürünlerde paket etiketindeki değerleri kullan.
 Yalnızca şu biçimde JSON döndür, başka metin yazma:
