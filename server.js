@@ -428,7 +428,8 @@ app.post('/api/nutrition/estimate', async (req, res) => {
   const anthropicVar = (process.env.ANTHROPIC_API_KEY || '').trim();
   // A non-Anthropic key saved under ANTHROPIC_API_KEY is treated as the Gemini key.
   const gemini = process.env.GEMINI_API_KEY || (anthropicVar && !anthropicVar.startsWith('sk-ant-') ? anthropicVar : null);
-  if (!gemini && !anthropicVar) return res.status(503).json({ error: 'no_key' });
+  const claudeKey = anthropicVar.startsWith('sk-ant-') ? anthropicVar : null;
+  if (!gemini && !claudeKey) return res.status(503).json({ error: 'no_key' });
   try {
     const prompt = `Sen bir diyetisyensin. Kullanıcı Türkiye'de yaşıyor ve yediği şeyi aşağıda tarif ediyor. Her yiyeceği ve içeceği ayrı kalem olarak çıkar. Miktar belirtilmemişse Türkiye'deki tipik porsiyonu, pişirme yağı belirtilmemişse ev veya esnaf lokantası yemeği için tipik yağ miktarını varsay. Değerler yenen (pişmiş) hâl içindir. Marka ürünlerde paket etiketindeki değerleri kullan.
 Yalnızca şu biçimde JSON döndür, başka metin yazma:
@@ -437,14 +438,20 @@ kcal tam sayı; p (protein), c (karbonhidrat), f (yağ), s (eklenmiş şeker: ş
 
 Tarif: """${text}"""`;
     let out;
+    // Free Gemini first; the cheapest Claude model only as a paid backup.
     if (gemini) {
-      out = await geminiWithFallback(gemini, prompt);
-    } else {
+      try {
+        out = await geminiWithFallback(gemini, prompt);
+      } catch (e) {
+        if (!claudeKey) throw e;
+      }
+    }
+    if (!out) {
       const Anthropic = require('@anthropic-ai/sdk');
-      const client = new Anthropic.Anthropic();
+      const client = new Anthropic.Anthropic({ apiKey: claudeKey });
       const msg = await client.messages.create({
-        model: 'claude-sonnet-5',
-        max_tokens: 1500,
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 800,
         messages: [{ role: 'user', content: prompt }],
       });
       out = msg.content.filter(b => b.type === 'text').map(b => b.text).join('');
