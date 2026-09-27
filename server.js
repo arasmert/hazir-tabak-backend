@@ -382,7 +382,7 @@ app.get('/api/nefis/detail', async (req, res) => {
 });
 
 // Free-tier Gemini: each model has its own quota and 503s under load, so fall through the list.
-const GEMINI_MODELS = (process.env.GEMINI_MODELS || 'gemini-flash-latest,gemini-2.5-flash,gemini-flash-lite-latest,gemini-2.5-flash-lite,gemini-2.0-flash')
+const GEMINI_MODELS = (process.env.GEMINI_MODELS || 'gemini-flash-latest,gemini-flash-lite-latest,gemini-2.5-flash-lite,gemini-2.0-flash')
   .split(',').map(s => s.trim()).filter(Boolean);
 
 async function geminiOnce(key, model, prompt) {
