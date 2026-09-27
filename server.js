@@ -381,6 +381,46 @@ app.get('/api/nefis/detail', async (req, res) => {
   }
 });
 
+// Free-tier Gemini: each model has its own quota and 503s under load, so fall through the list.
+const GEMINI_MODELS = (process.env.GEMINI_MODELS || 'gemini-flash-latest,gemini-2.5-flash,gemini-flash-lite-latest,gemini-2.5-flash-lite,gemini-2.0-flash')
+  .split(',').map(s => s.trim()).filter(Boolean);
+
+async function geminiOnce(key, model, prompt) {
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
+    }),
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const e = new Error(`${model} ${r.status} ${(j.error && j.error.message) || ''}`.slice(0, 200));
+    e.status = r.status;
+    throw e;
+  }
+  return ((j.candidates || [])[0]?.content?.parts || []).map(p => p.text || '').join('');
+}
+
+async function geminiWithFallback(key, prompt) {
+  let last;
+  for (let round = 0; round < 2; round++) {
+    for (const model of GEMINI_MODELS) {
+      try {
+        const out = await geminiOnce(key, model, prompt);
+        if (out) return out;
+      } catch (e) {
+        last = e;
+        console.warn('gemini', e.message);
+        if (![404, 429, 500, 503].includes(e.status)) throw e;
+      }
+    }
+    await new Promise(r => setTimeout(r, 4000));
+  }
+  throw last || new Error('gemini: no output');
+}
+
 // Yemek tarifinden kalori/makro tahmini (Claude): POST /api/nutrition/estimate {text}
 app.post('/api/nutrition/estimate', async (req, res) => {
   const text = String((req.body && req.body.text) || '').slice(0, 2000).trim();
@@ -398,18 +438,7 @@ kcal tam sayı; p (protein), c (karbonhidrat), f (yağ), s (eklenmiş şeker: ş
 Tarif: """${text}"""`;
     let out;
     if (gemini) {
-      const model = process.env.GEMINI_MODEL || 'gemini-flash-latest';
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gemini },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
-        }),
-      });
-      const j = await r.json();
-      if (!r.ok) throw new Error(`${r.status} ${(j.error && j.error.message) || ''}`);
-      out = ((j.candidates || [])[0]?.content?.parts || []).map(p => p.text || '').join('');
+      out = await geminiWithFallback(gemini, prompt);
     } else {
       const Anthropic = require('@anthropic-ai/sdk');
       const client = new Anthropic.Anthropic();
@@ -424,7 +453,8 @@ Tarif: """${text}"""`;
     if (!match) return res.status(502).json({ error: 'invalid_json' });
     res.json(JSON.parse(match[0]));
   } catch (err) {
-    res.status(502).json({ error: 'upstream_error', detail: String(err.message || err).slice(0, 200) });
+    const busy = [429, 503].includes(err.status);
+    res.status(busy ? 503 : 502).json({ error: busy ? 'rate_limited' : 'upstream_error', detail: String(err.message || err).slice(0, 200) });
   }
 });
 
